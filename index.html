@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gol a la Democracia - Juego Completo</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.js"></script>
+    <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #111; }
+        canvas { box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+    </style>
+</head>
+<body>
+    <script>
+        const gameData = [
+            // FASE 1
+            { fase: "FASE 1: CLASIFICAR", bg: 'bg_vesturario', titulo: "Elección del capitán", 
+              dialogos: [
+                  { personaje: "Narrador", img: "narrador", texto: "El equipo necesita elegir capitán antes del torneo clasificatorio." },
+                  { personaje: "Dalton", img: "dalton", texto: "Creo que lo más justo es hacer una votación entre todos." },
+                  { personaje: "Paolo", img: "paolo", texto: "¡No hay tiempo para eso! Que el entrenador decida y ya." }
+              ],
+              opciones: [
+                { texto: "A) El entrenador decide solo", esMala: true, stats: { dem: -15, just: -10, conf: -15 }, feedback: "❌ AUTORITARISMO: Se concentra el poder en una figura sin consultar a los afectados. Esto anula la 'Democracia Representativa' y destruye la legitimidad del líder." },
+                { texto: "B) Votación entre jugadores", esMala: false, stats: { dem: +20, just: +10, conf: +20 }, feedback: "✅ DEMOCRACIA REPRESENTATIVA: El poder emana del grupo. Elegir mediante el voto garantiza que el líder tenga legitimidad, apoyo mayoritario y cohesión." },
+                { texto: "C) Elegir al más popular", esMala: true, stats: { dem: -10, just: -10, conf: -5 }, feedback: "⚠️ FALTA DE INSTITUCIONALIDAD: Elegir sin un mecanismo formal de votación debilita las reglas del equipo y fomenta el populismo sin verdadero mérito." }
+            ]},
+            { fase: "FASE 1: CLASIFICAR", bg: 'bg_entrenamiento', titulo: "Jugador quiere opinar", 
+              dialogos: [
+                  { personaje: "Raúl", img: "raul", texto: "He estado analizando al rival, propongo cambiar la estrategia de entrenamiento." },
+                  { personaje: "Paolo", img: "paolo", texto: "Tú solo defiende, Raúl. No necesitamos tus ideas ahora." }
+              ],
+              opciones: [
+                { texto: "A) No lo dejan hablar", esMala: true, stats: { dem: -20, just: -10, conf: -15 }, feedback: "❌ CENSURA: En una democracia, la 'Libertad de Expresión' es vital. Silenciar voces disidentes impide la innovación y fomenta la tiranía de la mayoría." },
+                { texto: "B) Escuchan su propuesta", esMala: false, stats: { dem: +15, just: +10, conf: +15 }, feedback: "✅ DELIBERACIÓN Y PLURALISMO: Escuchar distintas perspectivas mejora la toma de decisiones. El debate abierto es el núcleo de la 'Participación Ciudadana'." },
+                { texto: "C) Lo ignoran", esMala: true, stats: { dem: -10, just: -5, conf: -10 }, feedback: "⚠️ EXCLUSIÓN: Ignorar a las minorías rompe el principio de 'Igualdad Política'. Todos los miembros deben tener garantías para ser escuchados." }
+            ]},
+            { fase: "FASE 1: CLASIFICAR", bg: 'bg_entrenamiento', titulo: "Regla injusta", 
+              dialogos: [
+                  { personaje: "Narrador", img: "narrador", texto: "El entrenador impone una regla disciplinaria que afecta solo a los defensas." },
+                  { personaje: "Dalton", img: "dalton", texto: "Esto es completamente injusto. Deberíamos hablar con él." },
+                  { personaje: "Raúl", img: "raul", texto: "Si decimos algo, nos pueden sacar del equipo titular..." }
+              ],
+              opciones: [
+                { texto: "A) Aceptarla sin cuestionar", esMala: true, stats: { dem: -5, just: -15, conf: -10 }, feedback: "⚠️ SUMISIÓN: Aceptar reglas arbitrarias debilita el 'Estado de Derecho'. Las normas deben aplicar para todos por igual (Igualdad ante la ley)." },
+                { texto: "B) Dialogar para cambiarla", esMala: false, stats: { dem: +20, just: +20, conf: +15 }, feedback: "✅ CONSENSO Y REFORMA: Las leyes en democracia no son absolutas; pueden modificarse mediante el diálogo y canales legales cuando son injustas." },
+                { texto: "C) Romper la regla", esMala: true, stats: { dem: -10, just: -10, conf: -15 }, feedback: "❌ ANARQUÍA: Romper las reglas destruye el orden institucional. El cambio debe buscarse a través del sistema, no destruyéndolo." }
+            ]},
+            { fase: "FASE 1: CLASIFICAR", bg: 'bg_vesturario', titulo: "Exclusión", 
+              dialogos: [
+                  { personaje: "Arquero Juan", img: "arquero_juan", texto: "Dejaron fuera de la convocatoria a Luis sin darle ninguna razón." },
+                  { personaje: "Paolo", img: "paolo", texto: "Mejor para nosotros, un problema menos en la cancha." }
+              ],
+              opciones: [
+                { texto: "A) No hacer nada", esMala: true, stats: { dem: -10, just: -15, conf: -15 }, feedback: "⚠️ INDIFERENCIA: La falta de solidaridad cívica permite que la injusticia avance. La democracia requiere una 'Ciudadanía Activa' que vigile los derechos." },
+                { texto: "B) Defenderlo", esMala: false, stats: { dem: +15, just: +20, conf: +20 }, feedback: "✅ GARANTÍA DE DERECHOS: Defender a otros es proteger el 'Debido Proceso'. Nadie debe ser excluido sin una justificación transparente y objetiva." },
+                { texto: "C) Apoyar la exclusión", esMala: true, stats: { dem: -20, just: -20, conf: -20 }, feedback: "❌ DISCRIMINACIÓN: Apoyar la exclusión arbitraria viola directamente los 'Derechos Humanos' básicos y fractura el pacto social del equipo." }
+            ]},
+            { fase: "FASE 1: CLASIFICAR", bg: 'bg_vesturario', titulo: "Decisiones cerradas", 
+              dialogos: [
+                  { personaje: "Dalton", img: "dalton", texto: "El capitán está cambiando las posiciones tácticas sin explicar por qué." },
+                  { personaje: "Raúl", img: "raul", texto: "Eso está creando confusión. Nadie sabe qué hacer." }
+              ],
+              opciones: [
+                { texto: "A) Confiar a ciegas", esMala: true, stats: { dem: -15, just: -5, conf: -10 }, feedback: "⚠️ FALTA DE CONTROL CIUDADANO: Confiar ciegamente elimina la 'Rendición de Cuentas' (Accountability). Los líderes deben explicar sus actos." },
+                { texto: "B) Pedir transparencia", esMala: false, stats: { dem: +20, just: +15, conf: +15 }, feedback: "✅ TRANSPARENCIA Y ACCOUNTABILITY: Exigir razones asegura que el poder no se corrompa. La información abierta es un pilar democrático." },
+                { texto: "C) Crear rumores", esMala: true, stats: { dem: -10, just: -10, conf: -20 }, feedback: "❌ DESINFORMACIÓN: Generar rumores contamina la 'Opinión Pública' y desestabiliza el entorno. Los reclamos deben hacerse de frente." }
+            ]},
+            // FASE 2
+            { fase: "FASE 2: EL PARTIDO", bg: 'bg_estadio', titulo: "Falta injusta", 
+              dialogos: [
+                  { personaje: "Narrador", img: "narrador", texto: "El rival comete una falta dura contra Dalton y el árbitro no pita nada." },
+                  { personaje: "Dalton", img: "dalton", texto: "¡Me rompió la pierna! ¡Tienen que decir algo!" }
+              ],
+              opciones: [
+                { texto: "A) Ignorar", esMala: true, stats: { dem: 0, just: -15, conf: -5 }, feedback: "⚠️ IMPUNIDAD: No denunciar las faltas erosiona el sistema de justicia. Si las reglas no se hacen cumplir, pierden su valor." },
+                { texto: "B) Reclamar con respeto", esMala: false, stats: { dem: +10, just: +20, conf: +10 }, feedback: "✅ DEFENSA INSTITUCIONAL: Reclamar por los canales oficiales (al árbitro) es ejercer el derecho a la petición para restaurar el 'Estado de Derecho'." },
+                { texto: "C) Vengarse con otra falta", esMala: true, stats: { dem: -20, just: -20, conf: -15 }, feedback: "❌ JUSTICIA POR MANO PROPIA: Responder con violencia destruye el pacto de convivencia y te convierte en un infractor del sistema." }
+            ]},
+            { fase: "FASE 2: EL PARTIDO", bg: 'bg_estadio', titulo: "El Penal", 
+              dialogos: [
+                  { personaje: "Narrador", img: "narrador", texto: "Minuto 85. Hay un penal a favor del equipo. Hay mucha tensión." },
+                  { personaje: "Paolo", img: "paolo", texto: "¡Lo pateo yo porque lo digo yo!" },
+                  { personaje: "Raúl", img: "raul", texto: "Pero Arquero Juan tiene mejor récord en los entrenamientos..." }
+              ],
+              opciones: [
+                { texto: "A) El capitán impone a alguien", esMala: true, stats: { dem: -15, just: -10, conf: -10 }, feedback: "❌ AUTOCRACIA: Usar la autoridad para imponer decisiones críticas sin consultar anula la capacidad de autogestión del grupo." },
+                { texto: "B) Lo deciden en equipo rápido", esMala: false, stats: { dem: +20, just: +10, conf: +15 }, feedback: "✅ INTELIGENCIA COLECTIVA: Una decisión participativa rápida distribuye la presión y permite elegir a la persona más capacitada en el momento." },
+                { texto: "C) Nadie asume la responsabilidad", esMala: true, stats: { dem: -10, just: 0, conf: -15 }, feedback: "⚠️ VACÍO DE PODER: La falta de liderazgo democrático lleva a la inacción. La democracia también exige asumir responsabilidades." }
+            ]},
+            { fase: "FASE 2: EL PARTIDO", bg: 'bg_estadio', titulo: "Desinformación", 
+              dialogos: [
+                  { personaje: "Paolo", img: "paolo", texto: "¡Un rival me dijo que quedan 10 minutos de reposición! ¡Hay que colgarse del arco!" },
+                  { personaje: "Dalton", img: "dalton", texto: "Esa información no tiene sentido, el marcador decía otra cosa..." }
+              ],
+              opciones: [
+                { texto: "A) Creerle y desesperarse", esMala: true, stats: { dem: -15, just: -15, conf: -20 }, feedback: "❌ MANIPULACIÓN: Caer en 'Fake News' altera la toma de decisiones. Una democracia requiere ciudadanos informados que no actúen por pánico." },
+                { texto: "B) Verificar con el árbitro", esMala: false, stats: { dem: +15, just: +15, conf: +15 }, feedback: "✅ PENSAMIENTO CRÍTICO: Acudir a las fuentes oficiales (el árbitro) combate la desinformación y asegura acciones basadas en datos reales." },
+                { texto: "C) Ignorar todo", esMala: true, stats: { dem: -5, just: -5, conf: -10 }, feedback: "⚠️ APATÍA: Ignorar el entorno te desconecta de la realidad del partido. Participar requiere estar consciente del contexto general." }
+            ]},
+            { fase: "FASE 2: EL PARTIDO", bg: 'bg_estadio', titulo: "Conflicto interno", 
+              dialogos: [
+                  { personaje: "Arquero Juan", img: "arquero_juan", texto: "¡Despeja el balón rápido, Raúl!" },
+                  { personaje: "Raúl", img: "raul", texto: "¡No me grites, tú dejaste el espacio libre!" },
+                  { personaje: "Narrador", img: "narrador", texto: "Empiezan a empujarse en pleno tiro de esquina." }
+              ],
+              opciones: [
+                { texto: "A) Dejar que peleen", esMala: true, stats: { dem: -15, just: -10, conf: -20 }, feedback: "❌ PÉRDIDA DE COHESIÓN: Permitir la hostilidad interna destruye la solidaridad, elemento esencial para que cualquier sociedad o equipo funcione." },
+                { texto: "B) Mediar y calmarlos", esMala: false, stats: { dem: +20, just: +15, conf: +20 }, feedback: "✅ RESOLUCIÓN PACÍFICA DE CONFLICTOS: Intervenir como mediador fortalece las instituciones democráticas, priorizando el diálogo sobre la agresión." },
+                { texto: "C) Ignorar la situación", esMala: true, stats: { dem: -10, just: -10, conf: -15 }, feedback: "⚠️ NEGLIGENCIA: Un problema no resuelto escala. La gobernanza efectiva requiere enfrentar y gestionar las crisis a tiempo." }
+            ]},
+            { fase: "FASE 2: EL PARTIDO", bg: 'bg_estadio', titulo: "Decisión final", 
+              dialogos: [
+                  { personaje: "Narrador", img: "narrador", texto: "Última jugada del partido. Anotas el gol de la victoria, pero el árbitro lo anula por un fuera de lugar dudoso." },
+                  { personaje: "Paolo", img: "paolo", texto: "¡Es un robo! ¡Hay que irse encima del árbitro!" }
+              ],
+              opciones: [
+                { texto: "A) Aceptaría y rendirse", esMala: true, stats: { dem: -10, just: -15, conf: -5 }, feedback: "⚠️ FATALISMO: Renunciar a los canales de apelación fomenta el abuso de autoridad. Las decisiones deben ser auditables." },
+                { texto: "B) Apelar al capitán para que hable", esMala: false, stats: { dem: +15, just: +20, conf: +10 }, feedback: "✅ USO DE MECANISMOS INSTITUCIONALES: Usar la representación oficial (el capitán) para exigir revisión valida el sistema de pesos y contrapesos." },
+                { texto: "C) Agredir al árbitro", esMala: true, stats: { dem: -25, just: -25, conf: -25 }, feedback: "❌ COLAPSO DEMOCRÁTICO: La agresión física o verbal deslegitima el sistema completo, sustituyendo la razón y la ley por la fuerza bruta." }
+            ]}
+        ];
+
+        function generarTexturasComunes(scene) {
+            let ctx = scene.add.graphics();
+            ctx.fillStyle(0xffffff, 1).lineStyle(2, 0x000000, 1);
+            ctx.fillCircle(25, 25, 24).strokeCircle(25, 25, 24);
+            ctx.beginPath().moveTo(10,15).lineTo(40,15).moveTo(10,35).lineTo(40,35).moveTo(25,5).lineTo(25,45).strokePath();
+            ctx.generateTexture('pelota_generada', 50, 50);
+            ctx.clear();
+        }
+
+        function dibujarArco(scene, x, y, width, height) {
+            let g = scene.add.graphics();
+            g.lineStyle(8, 0xffffff, 1);
+            g.strokeRect(x, y, width, height); 
+            g.lineStyle(2, 0xaaaaaa, 0.5);
+            for(let i = 10; i < width; i += 20) { g.moveTo(x + i, y); g.lineTo(x + i, y + height); }
+            for(let j = 10; j < height; j += 20) { g.moveTo(x, y + j); g.lineTo(x + width, y + j); }
+            g.strokePath();
+        }
+
+        // ==========================================
+        // ESCENA 1: NOVELA VISUAL PRINCIPAL
+        // ==========================================
+        class VNScene extends Phaser.Scene {
+            constructor() { super({ key: 'VNScene' }); }
+
+            init(data) {
+                if (data && data.stats) {
+                    this.stats = data.stats; 
+                    this.idx = data.idx; 
+                    this.fase1Mostrada = data.fase1Mostrada;
+                } else {
+                    this.idx = 0; 
+                    this.stats = { dem: 50, just: 50, conf: 50 }; 
+                    this.fase1Mostrada = false;
+                }
+                this.botonesOpciones = [];
+                this.estado = 'MOSTRANDO_DIALOGOS'; 
+                this.dialogoIdx = 0;
+                this.opcionSeleccionada = null;
+            }
+
+            preload() {
+                this.load.image('bg_vesturario', 'bg_vestuario.png'); 
+                this.load.image('bg_entrenamiento', 'bg_entrenamiento.png');
+                this.load.image('bg_estadio', 'bg_estadio.png');
+                this.load.image('dalton', 'Dalton.png');
+                this.load.image('paolo', 'Paolo.png');
+                this.load.image('raul', 'Raul.png');
+                this.load.image('arquero_juan', 'ArqueroJuan.png');
+                this.load.image('narrador', 'Entrenador.png');
+
+                // CARGA DE MÚSICA
+                this.load.audio('musica_fondo', 'musica.mp3'); 
+            }
+
+            create() {
+                const w = this.cameras.main.width; const h = this.cameras.main.height;
+                this.fondo = this.add.image(w/2, h/2, 'bg_vesturario').setDisplaySize(w, h);
+
+                // CONTROL DE MÚSICA (Loop infinito)
+                if (!this.sound.get('musica_fondo')) {
+                    this.musica = this.sound.add('musica_fondo', { loop: true, volume: 0.5 });
+                    this.musica.play();
+                } else {
+                    this.musica = this.sound.get('musica_fondo');
+                    if (!this.musica.isPlaying) this.musica.play();
+                }
+
+                // HUD ESTADÍSTICAS
+                const hudBg = this.add.rectangle(w/2, 20, w, 40, 0x000000, 0.8);
+                this.txtDem = this.add.text(50, 10, `Democracia: ${this.stats.dem}%`, { font: '18px Arial', fontStyle: 'bold', fill: '#00ffcc' });
+                this.txtJust = this.add.text(350, 10, `Justicia: ${this.stats.just}%`, { font: '18px Arial', fontStyle: 'bold', fill: '#00ff88' });
+                this.txtConf = this.add.text(650, 10, `Confianza: ${this.stats.conf}%`, { font: '18px Arial', fontStyle: 'bold', fill: '#ffcc00' });
+
+                this.imgPersonaje = this.add.sprite(w/2, h - 200, '').setOrigin(0.5, 0.5).setVisible(false);
+
+                const dialogH = 200; const dialogY = h - dialogH;
+                this.add.rectangle(w/2, dialogY + dialogH/2, w, dialogH, 0x000000, 0.85);
+
+                this.txtNombre = this.add.text(50, dialogY + 20, "", { font: '24px Arial', fontStyle: 'bold', fill: '#00ffcc' });
+                this.txtDialogo = this.add.text(70, dialogY + 60, "", { font: '19px Arial', fill: '#ffffff', wordWrap: { width: w - 140 } });
+
+                this.input.on('pointerdown', () => this.avanzarLinea());
+                this.cargarEscenario();
+            }
+
+            cargarEscenario() {
+                if (this.idx === 5 && !this.fase1Mostrada) {
+                    this.mostrarIntermedio();
+                    return;
+                }
+                if (this.idx >= gameData.length) {
+                    this.mostrarFinal();
+                    return;
+                }
+
+                const situacion = gameData[this.idx];
+                this.fondo.setTexture(situacion.bg).setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+                this.estado = 'MOSTRANDO_DIALOGOS';
+                this.dialogoIdx = 0;
+                this.mostrarDialogoActual();
+            }
+
+            mostrarDialogoActual() {
+                const situacion = gameData[this.idx];
+                if (this.dialogoIdx < situacion.dialogos.length) {
+                    const dialogo = situacion.dialogos[this.dialogoIdx];
+                    this.txtNombre.setText(dialogo.personaje.toUpperCase()).setColor('#00ffcc');
+                    this.txtDialogo.setText(`[${situacion.titulo}]\n${dialogo.texto}\n\n(Haz clic para continuar...)`);
+                    if (dialogo.img !== 'none' && this.textures.exists(dialogo.img)) {
+                        this.imgPersonaje.setTexture(dialogo.img).setVisible(true).setScale(0.4); 
+                    } else {
+                        this.imgPersonaje.setVisible(false);
+                    }
+                } else {
+                    this.imgPersonaje.setVisible(false);
+                    this.mostrarOpciones();
+                }
+            }
+
+            avanzarLinea() {
+                if (this.estado === 'MOSTRANDO_DIALOGOS') {
+                    this.dialogoIdx++;
+                    this.mostrarDialogoActual();
+                } else if (this.estado === 'FEEDBACK') {
+                    let esFase2 = this.idx >= 5;
+                    if (!esFase2) { 
+                        if (this.opcionSeleccionada && this.opcionSeleccionada.esMala) {
+                            this.scene.start('DominadasScene', { stats: this.stats, idx: this.idx + 1, fase1Mostrada: this.fase1Mostrada });
+                        } else {
+                            this.idx++; this.cargarEscenario();
+                        }
+                    } else { 
+                        if (this.opcionSeleccionada && this.opcionSeleccionada.esMala) {
+                            this.scene.start('GoalkeeperScene', { stats: this.stats, idx: this.idx + 1, fase1Mostrada: this.fase1Mostrada });
+                        } else if (this.opcionSeleccionada && !this.opcionSeleccionada.esMala) {
+                            this.scene.start('PenaltyScene', { stats: this.stats, idx: this.idx + 1, fase1Mostrada: this.fase1Mostrada });
+                        } else {
+                            this.idx++; this.cargarEscenario();
+                        }
+                    }
+                }
+            }
+
+            mostrarOpciones() {
+                this.estado = 'ESPERANDO_OPCION';
+                const situacion = gameData[this.idx];
+                const w = this.cameras.main.width;
+                this.txtNombre.setText("Toma una Decisión").setColor('#ffaa00');
+                this.txtDialogo.setText(`[${situacion.titulo}]\n¿Qué debería hacer el equipo?`);
+
+                let startY = 130;
+                situacion.opciones.forEach(opcion => {
+                    const bg = this.add.rectangle(w/2, startY, 700, 50, 0x1a2a3a, 0.95).setStrokeStyle(2, 0x00ffcc).setInteractive({ useHandCursor: true });
+                    const txt = this.add.text(w/2, startY, opcion.texto, { font: '20px Arial', fill: '#ffffff' }).setOrigin(0.5);
+                    bg.on('pointerover', () => bg.setFillStyle(0x2a4a6a, 1));
+                    bg.on('pointerout', () => bg.setFillStyle(0x1a2a3a, 0.95));
+                    bg.on('pointerdown', (pointer, localX, localY, event) => {
+                        event.stopPropagation(); 
+                        this.seleccionarOpcion(opcion);
+                    });
+                    this.botonesOpciones.push(bg, txt); startY += 70;
+                });
+            }
+
+            seleccionarOpcion(opcion) {
+                this.botonesOpciones.forEach(b => b.destroy()); this.botonesOpciones = [];
+                this.opcionSeleccionada = opcion;
+                this.stats.dem = Phaser.Math.Clamp(this.stats.dem + opcion.stats.dem, 0, 100);
+                this.stats.just = Phaser.Math.Clamp(this.stats.just + opcion.stats.just, 0, 100);
+                this.stats.conf = Phaser.Math.Clamp(this.stats.conf + opcion.stats.conf, 0, 100);
+                this.actualizarHUD();
+                this.estado = 'FEEDBACK';
+                this.txtNombre.setText("Análisis de la Decisión").setColor(opcion.esMala ? '#ff4444' : '#00ff88');
+                let esFase2 = this.idx >= 5;
+                let msjExtra = "";
+                if (!esFase2 && opcion.esMala) msjExtra = "\n\n(Haz clic para ir al entrenamiento de castigo...)";
+                else if (esFase2 && opcion.esMala) msjExtra = "\n\n(¡El rival ataca! Haz clic para atajar el tiro...)";
+                else if (esFase2 && !opcion.esMala) msjExtra = "\n\n(¡Tienes oportunidad de GOL! Haz clic para cobrar el tiro...)";
+                else msjExtra = "\n\n(Haz clic para continuar...)";
+                this.txtDialogo.setText(`${opcion.feedback}${msjExtra}`);
+            }
+
+            actualizarHUD() {
+                this.txtDem.setText(`Democracia: ${this.stats.dem}%`);
+                this.txtJust.setText(`Justicia: ${this.stats.just}%`);
+                this.txtConf.setText(`Confianza: ${this.stats.conf}%`);
+            }
+
+            mostrarIntermedio() {
+                this.estado = 'FEEDBACK';
+                this.opcionSeleccionada = null; 
+                this.fase1Mostrada = true;
+                const prom = (this.stats.dem + this.stats.just + this.stats.conf) / 3;
+                let mensaje = prom >= 60 ? "🏆 ¡Lograron clasificar consolidando un grupo fuerte!" : "😬 Pasaron al mundial, pero con prácticas antidemocráticas.";
+                this.fondo.setTexture('bg_vesturario'); 
+                this.txtNombre.setText("Resultados Fase 1").setColor('#ffffff');
+                this.txtDialogo.setText(`Termina la eliminatoria.\n${mensaje}\n\n(Haz clic para iniciar la Fase 2: El Partido Final)`);
+            }
+
+            mostrarFinal() {
+                this.estado = 'FIN';
+
+                // PARAR LA MÚSICA AL TERMINAR
+                if (this.musica) this.musica.stop();
+
+                const prom = (this.stats.dem + this.stats.just + this.stats.conf) / 3;
+                let titulo = ""; let desc = "";
+                if (prom >= 75) { titulo = "🏆 CAMPEONES DEMOCRÁTICOS"; desc = "Tomaste decisiones justas. El equipo gana y es un ejemplo."; } 
+                else if (prom >= 40) { titulo = "⚖️ EQUIPO INESTABLE"; desc = "Llegaron lejos, pero la falta de consistencia democrática les costó la gloria."; } 
+                else { titulo = "🚨 CRISIS TOTAL"; desc = "Autoritarismo e injusticia. El sistema falló, el equipo pierde y se desintegra."; }
+
+                this.fondo.setTexture('bg_estadio'); 
+                this.txtNombre.setText(`FINAL: ${titulo}`).setColor('#ffaa00');
+                this.txtDialogo.setText(`${desc}`);
+
+                const w = this.cameras.main.width; const h = this.cameras.main.height;
+                const btn = this.add.rectangle(w/2, h/2 + 30, 250, 50, 0x1a2a3a).setStrokeStyle(2, 0xffffff).setInteractive({ useHandCursor: true });
+                this.add.text(w/2, h/2 + 30, "Jugar de Nuevo ↺", { font: '22px Arial', fontStyle: 'bold', fill: '#ffffff' }).setOrigin(0.5);
+                
+                btn.on('pointerdown', () => {
+                    this.scene.start('VNScene', { stats: null });
+                });
+            }
+        }
+
+        // ==========================================
+        // ESCENA: MINIJUEGO DOMINADAS (FASE 1)
+        // ==========================================
+        class DominadasScene extends Phaser.Scene {
+            constructor() { super({ key: 'DominadasScene' }); }
+            init(data) { this.stats = data.stats; this.nextIdx = data.idx; this.fase1Mostrada = data.fase1Mostrada; this.score = 0; this.jugando = true; }
+            preload() { generarTexturasComunes(this); this.load.image('dominadas_feliz', 'DominadasFeliz.png'); this.load.image('dominadas_triste', 'DominadasTriste.png'); }
+            create() {
+                const w = this.cameras.main.width; const h = this.cameras.main.height;
+                this.add.image(w/2, h/2, 'bg_entrenamiento').setDisplaySize(w, h).setTint(0x442222);
+                this.txtScore = this.add.text(w/2, 50, "Dominadas: 0", { font: '32px Arial', fontStyle: 'bold', fill: '#ffffff' }).setOrigin(0.5);
+                this.add.text(w/2, 90, "Decisión incorrecta. ¡Entrena para recuperar la confianza del equipo!", { font: '22px Arial', fill: '#ffcc00' }).setOrigin(0.5);
+                this.pelota = this.physics.add.image(w/2, 150, 'pelota_generada').setInteractive({ useHandCursor: true });
+                this.pelota.setCircle(25).setBounce(0.8).setCollideWorldBounds(true);
+                this.physics.world.setBoundsCollision(true, true, true, false); 
+                this.pelota.setVelocity(Phaser.Math.Between(-80, 80), 0).setAngularVelocity(150);
+                this.pelota.on('pointerdown', () => {
+                    if (!this.jugando) return;
+                    this.score++; this.txtScore.setText("Dominadas: " + this.score);
+                    this.pelota.setVelocityY(-350).setVelocityX(Phaser.Math.Between(-150, 150)).setAngularVelocity(Phaser.Math.Between(-300, 300));
+                    this.tweens.add({ targets: this.pelota, scaleX: 1.2, scaleY: 0.8, duration: 50, yoyo: true });
+                });
+            }
+            update() { if (this.jugando && this.pelota.y > this.cameras.main.height + 30) this.terminarJuego(); }
+            terminarJuego() {
+                this.jugando = false;
+                let bonus = Math.min(this.score * 2, 20);
+                this.stats.dem = Phaser.Math.Clamp(this.stats.dem + bonus, 0, 100); this.stats.just = Phaser.Math.Clamp(this.stats.just + bonus, 0, 100); this.stats.conf = Phaser.Math.Clamp(this.stats.conf + bonus, 0, 100);
+                const w = this.cameras.main.width; const h = this.cameras.main.height;
+                this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.7);
+                let imgKey = this.score > 0 ? 'dominadas_feliz' : 'dominadas_triste';
+                this.add.image(w/2, h/2 - 100, imgKey).setScale(0.2); 
+                let panelY = h/2 + 100;
+                this.add.rectangle(w/2, panelY, 550, 180, 0x000000, 0.9).setStrokeStyle(2, 0xffaa00);
+                this.add.text(w/2, panelY - 50, `¡Fin del Entrenamiento!`, { font: '28px Arial', fill: '#ffaa00' }).setOrigin(0.5);
+                this.add.text(w/2, panelY - 10, `Hiciste ${this.score} dominadas.\nRecuperas +${bonus}% en estadísticas.`, { font: '20px Arial', fill: '#fff', align:'center' }).setOrigin(0.5);
+                const btn = this.add.rectangle(w/2, panelY + 50, 250, 45, 0x1a2a3a).setStrokeStyle(2, 0xffffff).setInteractive({ useHandCursor: true });
+                this.add.text(w/2, panelY + 50, "Continuar ➔", { font: '20px Arial', fill: '#fff' }).setOrigin(0.5);
+                btn.on('pointerdown', () => this.scene.start('VNScene', { stats: this.stats, idx: this.nextIdx, fase1Mostrada: this.fase1Mostrada }));
+            }
+        }
+
+        // ==========================================
+        // ESCENA: MINIJUEGO PENALTY (FASE 2)
+        // ==========================================
+        class PenaltyScene extends Phaser.Scene {
+            constructor() { super({ key: 'PenaltyScene' }); }
+            init(data) { this.stats = data.stats; this.nextIdx = data.idx; this.fase1Mostrada = data.fase1Mostrada; }
+            preload() { generarTexturasComunes(this); this.load.image('portero_rival', 'ArqueroRival.png'); this.load.image('arquero_triste', 'arquerotriste.png'); }
+            create() {
+                const w = this.cameras.main.width; const h = this.cameras.main.height;
+                this.add.image(w/2, h/2, 'bg_estadio').setDisplaySize(w, h).setTint(0x888888);
+                dibujarArco(this, w/2 - 250, 120, 500, 230);
+                this.porteroRival = this.add.sprite(w/2, 250, 'portero_rival').setScale(0.2); 
+                this.tweens.add({ targets: this.porteroRival, x: { from: w/2 - 180, to: w/2 + 180 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+                this.pelota = this.add.image(w/2, h - 120, 'pelota_generada');
+                this.crosshair = this.add.graphics();
+                this.crosshair.lineStyle(3, 0xff0000).strokeCircle(0, 0, 15).moveTo(-20, 0).lineTo(20, 0).moveTo(0, -20).lineTo(0, 20).strokePath();
+                this.crosshair.x = w/2; this.crosshair.y = 200;
+                this.txtInst = this.add.text(w/2, 50, "1. Apunta con el ratón\n2. Presiona ESPACIO para FIJAR la mira.", { font: '20px Arial', fill: '#00ffcc', align:'center', backgroundColor: '#000000', padding: {x:10, y:10} }).setOrigin(0.5);
+                const barW = 400; const barH = 30; const barY = h - 50;
+                this.powerBg = this.add.rectangle(w/2, barY, barW, barH, 0x333333).setStrokeStyle(2, 0xffffff).setAlpha(0);
+                this.powerZone = this.add.rectangle(w/2, barY, 100, barH, 0x00ff00, 0.7).setAlpha(0); 
+                this.powerCursor = this.add.rectangle(w/2 - barW/2, barY, 10, barH + 15, 0xffffff).setAlpha(0);
+                this.estado = 'APUNTAR'; this.dirPot = 12;
+                this.input.on('pointermove', (pointer) => {
+                    if (this.estado === 'APUNTAR') {
+                        this.crosshair.x = Phaser.Math.Clamp(pointer.x, w/2 - 240, w/2 + 240);
+                        this.crosshair.y = Phaser.Math.Clamp(pointer.y, 130, 340);
+                    }
+                });
+                this.input.keyboard.on('keydown-SPACE', () => {
+                    if (this.estado === 'APUNTAR') {
+                        this.estado = 'POTENCIA';
+                        this.txtInst.setText("MIRA FIJADA.\nPresiona ESPACIO cuando la barra pase por la zona VERDE.");
+                        this.powerBg.setAlpha(1); this.powerZone.setAlpha(1); this.powerCursor.setAlpha(1);
+                    } else if (this.estado === 'POTENCIA') {
+                        this.estado = 'DISPARO';
+                        this.disparar();
+                    }
+                });
+            }
+            update() {
+                if (this.estado === 'POTENCIA') {
+                    const w = this.cameras.main.width;
+                    this.powerCursor.x += this.dirPot;
+                    if (this.powerCursor.x >= w/2 + 200 || this.powerCursor.x <= w/2 - 200) this.dirPot *= -1;
+                }
+            }
+            disparar() {
+                const w = this.cameras.main.width;
+                let targetX = this.crosshair.x;
+                let targetY = this.crosshair.y;
+                let msj = ""; let color = ""; let esGol = false;
+                let distanciaCentro = Math.abs(this.powerCursor.x - w/2);
+                if (distanciaCentro > 120) { targetY -= 200; msj = "¡Horrible disparo!\nSe fue a la tribuna."; } 
+                else if (distanciaCentro > 50) { targetX += Phaser.Math.Between(-150, 150); targetY -= 100; msj = "¡Poca precisión!\nEl tiro salió desviado."; } 
+                else { msj = "¡Tiro Perfecto!"; }
+                this.tweens.add({
+                    targets: this.pelota, x: targetX, y: targetY, scaleX: 0.4, scaleY: 0.4, duration: 500, ease: 'Power2',
+                    onComplete: () => {
+                        if (targetX > w/2 - 250 && targetX < w/2 + 250 && targetY > 120 && targetY < 350) esGol = true;
+                        if (esGol) {
+                            let distanciaPortero = Math.abs(targetX - this.porteroRival.x);
+                            if (distanciaPortero < 40) { esGol = false; msj = "¡ATAJADÓN!\nEl arquero adivinó el tiro."; }
+                        }
+                        if (esGol) {
+                            this.stats.dem += 10; this.stats.just += 10; this.stats.conf += 10;
+                            this.cameras.main.flash(300, 0, 255, 0);
+                            this.time.delayedCall(500, () => {
+                                this.scene.start('GoalCelebrationScene', { stats: this.stats, idx: this.nextIdx, fase1Mostrada: this.fase1Mostrada });
+                            });
+                        } else {
+                            color = 0xff4444; this.cameras.main.shake(200, 0.01);
+                            this.mostrarResultado(msj, color, 'arquero_triste'); 
+                        }
+                    }
+                });
+            }
+            mostrarResultado(msj, colorHex, imgKey = null) {
+                const w = this.cameras.main.width; const h = this.cameras.main.height;
+                this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.7);
+                if (imgKey) this.add.image(w/2, h/2 - 120, imgKey).setScale(0.2);
+                let panelY = imgKey ? h/2 + 80 : h/2;
+                this.add.rectangle(w/2, panelY, 500, 180, 0x000000, 0.9).setStrokeStyle(2, colorHex);
+                this.add.text(w/2, panelY - 30, msj, { font: '26px Arial', fontStyle: 'bold', fill: '#fff', align:'center' }).setOrigin(0.5);
+                const btn = this.add.rectangle(w/2, panelY + 50, 200, 45, 0x1a2a3a).setStrokeStyle(2, 0xaaaaaa).setInteractive({ useHandCursor: true });
+                this.add.text(w/2, panelY + 50, "Continuar", { font: '20px Arial', fill: '#fff' }).setOrigin(0.5);
+                btn.on('pointerdown', () => this.scene.start('VNScene', { stats: this.stats, idx: this.nextIdx, fase1Mostrada: this.fase1Mostrada }));
+            }
+        }
+
+        // ==========================================
+        // ESCENA: MINIJUEGO PORTERO (FASE 2)
+        // ==========================================
+        class GoalkeeperScene extends Phaser.Scene {
+            constructor() { super({ key: 'GoalkeeperScene' }); }
+            init(data) { this.stats = data.stats; this.nextIdx = data.idx; this.fase1Mostrada = data.fase1Mostrada; }
+            preload() { generarTexturasComunes(this); this.load.image('arquero', 'arquero.png'); this.load.image('arquero_triste', 'arquerotriste.png'); }
+            create() {
+                const w = this.cameras.main.width; const h = this.cameras.main.height;
+                this.add.image(w/2, h/2, 'bg_estadio').setDisplaySize(w, h).setTint(0x884444);
+                dibujarArco(this, w/2 - 250, 120, 500, 230);
+                this.add.text(w/2, 50, "¡EL RIVAL ATACA!\nMueve el ratón para atajar el tiro.", { font: '24px Arial', fontStyle:'bold', fill: '#ff4444', align:'center', backgroundColor: '#000000' }).setOrigin(0.5);
+                this.pelota = this.add.image(w/2, h, 'pelota_generada').setScale(1.2); 
+                this.porteroJugador = this.add.sprite(w/2, 250, 'arquero').setScale(0.2); 
+                this.input.on('pointermove', (pointer) => { this.porteroJugador.x = Phaser.Math.Clamp(pointer.x, w/2 - 250, w/2 + 250); });
+                this.time.delayedCall(1000, () => this.dispararRival(w));
+            }
+            dispararRival(w) {
+                let targetX = Phaser.Math.Between(w/2 - 230, w/2 + 230); 
+                this.tweens.add({ targets: this.pelota, x: targetX, y: 250, scaleX: 0.4, scaleY: 0.4, duration: 600, ease: 'Power1', onComplete: () => this.evaluarAtajada(targetX) });
+            }
+            evaluarAtajada(targetX) {
+                let distancia = Math.abs(this.porteroJugador.x - targetX);
+                let msj = ""; let color = ""; let imgKeyResult = null;
+                if (distancia < 40) {
+                    msj = "¡ATAJADÓN!\nLograste mitigar los daños (+5%).";
+                    this.stats.dem += 5; this.stats.just += 5; this.stats.conf += 5; color = 0x00ffcc;
+                    this.tweens.add({ targets: this.pelota, y: 400, x: targetX + Phaser.Math.Between(-100, 100), scaleX: 0.8, scaleY: 0.8, duration: 400, ease: 'Quad.easeOut' });
+                    this.cameras.main.shake(200, 0.01);
+                } else {
+                    msj = "¡GOL DEL RIVAL!\nTu mala decisión costó caro."; color = 0xff4444; imgKeyResult = 'arquero_triste'; 
+                    this.tweens.add({ targets: this.pelota, y: 150, scaleX: 0.2, scaleY: 0.2, duration: 300, ease: 'Quad.easeOut', onComplete: () => { this.cameras.main.flash(300, 255, 0, 0); } });
+                }
+                this.time.delayedCall(1500, () => this.mostrarResultado(msj, color, imgKeyResult));
+            }
+            mostrarResultado(msj, colorHex, imgKey = null) {
+                const w = this.cameras.main.width; const h = this.cameras.main.height;
+                this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.7);
+                if (imgKey) this.add.image(w/2, h/2 - 120, imgKey).setScale(0.2);
+                let panelY = imgKey ? h/2 + 80 : h/2;
+                this.add.rectangle(w/2, panelY, 500, 180, 0x000000, 0.9).setStrokeStyle(2, colorHex);
+                this.add.text(w/2, panelY - 30, msj, { font: '26px Arial', fontStyle: 'bold', fill: '#fff', align:'center' }).setOrigin(0.5);
+                const btn = this.add.rectangle(w/2, panelY + 50, 200, 45, 0x1a2a3a).setStrokeStyle(2, 0xaaaaaa).setInteractive({ useHandCursor: true });
+                this.add.text(w/2, panelY + 50, "Continuar", { font: '20px Arial', fill: '#fff' }).setOrigin(0.5);
+                btn.on('pointerdown', () => this.scene.start('VNScene', { stats: this.stats, idx: this.nextIdx, fase1Mostrada: this.fase1Mostrada }));
+            }
+        }
+
+        class GoalCelebrationScene extends Phaser.Scene {
+            constructor() { super({ key: 'GoalCelebrationScene' }); }
+            init(data) { this.stats = data.stats; this.nextIdx = data.idx; this.fase1Mostrada = data.fase1Mostrada; }
+            preload() { this.load.image('celebracion', 'celebracion.png'); }
+            create() {
+                const w = this.cameras.main.width; const h = this.cameras.main.height;
+                this.add.rectangle(w / 2, h / 2, w, h, 0x000000, 0.7);
+                this.add.image(w / 2, h / 2 - 50, 'celebracion').setScale(0.2); 
+                this.add.text(w / 2, h / 2 + 100, "¡¡¡GOOOOOL!!!", { font: 'bold 40px Arial', fill: '#00ffcc', align: 'center' }).setOrigin(0.5);
+                this.add.text(w / 2, h / 2 + 150, "+10% en todas las áreas.", { font: '20px Arial', fill: '#ffffff', align: 'center' }).setOrigin(0.5);
+                const btn = this.add.rectangle(w / 2, h / 2 + 200, 200, 45, 0x1a2a3a).setStrokeStyle(2, 0xaaaaaa).setInteractive({ useHandCursor: true });
+                this.add.text(w / 2, h / 2 + 200, "Continuar", { font: '20px Arial', fill: '#fff' }).setOrigin(0.5);
+                btn.on('pointerdown', () => { this.scene.start('VNScene', { stats: this.stats, idx: this.nextIdx, fase1Mostrada: this.fase1Mostrada }); });
+            }
+        }
+
+        const config = {
+            type: Phaser.AUTO, width: 1024, height: 600, parent: document.body,
+            physics: { default: 'arcade', arcade: { gravity: { y: 400 }, debug: false } },
+            scene: [VNScene, DominadasScene, PenaltyScene, GoalkeeperScene, GoalCelebrationScene] 
+        };
+        const game = new Phaser.Game(config);
+    </script>
+</body>
+</html>
